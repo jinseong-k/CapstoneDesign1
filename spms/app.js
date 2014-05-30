@@ -42,6 +42,7 @@ app.get('/services/load_info',services.load_info);
 app.get('/services/myplant',services.myplant);
 app.get('/services/setwater',services.setwater);
 app.get('/services/iswater',services.iswater);
+app.get('/services/loadwater',services.loadwater);
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));

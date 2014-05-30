@@ -85,6 +85,12 @@ exports.record_info = function(req, res){
 				});
 			}
 		});
+		if(req.query.humid < 20){
+			connection.query('UPDATE plant_user SET iswatering = 1 WHERE p_id=?',[req.query.p_id],function(err, rows){
+				console.log('not enough Water');
+				connection.release();
+			});
+		}
 		connection.query('INSERT INTO plant_info(P_Id,time,temperature,humidity,illumination) VALUES (?,?,?,?,?)',[req.query.p_id, d, req.query.temp, req.query.humid, req.query.ill], function(err,rows){
 			connection.release();
 			if(rows==undefined){
@@ -142,12 +148,33 @@ exports.iswater = function(req,res){
 		connection.query('SELECT iswatering FROM plant_user WHERE p_id = ?',[req.query.p_id],function(err,rows){
 			connection.release();
 			if(rows[0].iswatering == 1){
-				res.send(200,'true');
+				console.log('not enough water');
+				res.send(200,'1');
 				connection.query('UPDATE plant_user SET iswatering = 0 WHERE p_id = ?',[req.query.p_id],function(err,rows){
 					connection.release();
+					var dt = new Date();
+					var d = dt.toFormat('YYYY-MM-DD HH24:MI:SS');
+					connection.query('INSERT INTO water_Supply (P_Id, date) VALUES (?,?)',[req.query.p_id,d],function(err,rows){
+						connection.release();
+					});
 				});
 			}else{
+				console.log('enough water');
+				res.send(200,'0');
+			}
+		});
+	});
+};
+
+exports.loadwater = function(req,res){
+	pool.getConnection(function(err, connection){
+		connection.query('SELECT * FROM (SELECT * FROM water_Supply WHERE p_id = 2 ORDER BY W_Id DESC LIMIT 0,10) a ORDER BY w_id ASC',[req.query.p_id],function(err,rows){
+			connection.release();
+			if(rows.length == 0){
 				res.send(200,'false');
+			}else{
+				res.charset = "utf-8";
+				res.json(rows);
 			}
 		});
 	});
